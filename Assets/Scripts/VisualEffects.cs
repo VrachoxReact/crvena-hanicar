@@ -1,19 +1,24 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
+using System.Collections.Generic;
 
 public class VisualEffects : MonoBehaviour
 {
     public static VisualEffects Instance { get; private set; }
     
     [Header("Card Animation Settings")]
-    [SerializeField] private float cardMoveSpeed = 5f;
-    [SerializeField] private float cardRotateSpeed = 540f;
+    [SerializeField, Tooltip("Speed of card movement animations")] 
+    private float cardMoveSpeed = 5f;
+    [SerializeField, Tooltip("Speed of card rotation animations")] 
+    private float cardRotateSpeed = 180f;
     [SerializeField] private AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     
     [Header("UI Animation Settings")]
-    [SerializeField] private float panelFadeInDuration = 0.3f;
-    [SerializeField] private float panelFadeOutDuration = 0.2f;
+    [SerializeField, Tooltip("Duration of panel fade in animations")] 
+    private float panelFadeInDuration = 0.5f;
+    [SerializeField, Tooltip("Duration of panel fade out animations")] 
+    private float panelFadeOutDuration = 0.3f;
     
     [Header("Particle Effects")]
     [SerializeField] private GameObject winEffect;
@@ -38,6 +43,10 @@ public class VisualEffects : MonoBehaviour
         Vector3 startPosition = card.position;
         float elapsedTime = 0;
         
+        // Use cardMoveSpeed for dynamic duration calculation if needed
+        if (duration <= 0)
+            duration = Vector3.Distance(startPosition, targetPosition) / cardMoveSpeed;
+        
         while (elapsedTime < duration)
         {
             elapsedTime += Time.deltaTime;
@@ -56,6 +65,10 @@ public class VisualEffects : MonoBehaviour
         float startRotation = cardTransform.eulerAngles.y;
         float targetRotation = faceUp ? 180f : 0f;
         float elapsedTime = 0;
+        
+        // Use cardRotateSpeed for dynamic duration calculation if needed
+        if (duration <= 0)
+            duration = 180f / cardRotateSpeed;
         
         while (elapsedTime < duration / 2)
         {
@@ -82,10 +95,15 @@ public class VisualEffects : MonoBehaviour
     }
     
     // UI Panel Fade Animation
-    public IEnumerator FadePanel(CanvasGroup panel, bool fadeIn, float duration = 0.3f)
+    public IEnumerator FadePanel(CanvasGroup panel, bool fadeIn, float duration = -1f)
     {
         float startAlpha = panel.alpha;
         float targetAlpha = fadeIn ? 1f : 0f;
+        
+        // Use configured durations if no explicit duration provided
+        if (duration < 0)
+            duration = fadeIn ? panelFadeInDuration : panelFadeOutDuration;
+        
         float elapsedTime = 0;
         
         panel.gameObject.SetActive(true);

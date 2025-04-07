@@ -78,4 +78,54 @@ public class SVGImporter : MonoBehaviour
         Texture2D texture = LoadSVGAsTexture(svgPath, width, height);
         callback?.Invoke(texture);
     }
+    
+    // These methods are added for unit testing
+    
+    public Sprite ImportSVG(string svgPath)
+    {
+        // Create a texture from the SVG file
+        Texture2D texture = LoadSVGAsTexture(svgPath);
+        
+        // Create a sprite from the texture
+        return Sprite.Create(
+            texture, 
+            new Rect(0, 0, texture.width, texture.height), 
+            new Vector2(0.5f, 0.5f)
+        );
+    }
+    
+    public Sprite GetSVGSprite(string name)
+    {
+        // Look for the sprite in Resources
+        Sprite sprite = Resources.Load<Sprite>($"Cards/{name}");
+        
+        if (sprite == null)
+        {
+            // If not found, try UI folder
+            sprite = Resources.Load<Sprite>($"UI/{name}");
+        }
+        
+        if (sprite == null)
+        {
+            // If still not found, create a placeholder
+            Texture2D texture = new Texture2D(100, 100);
+            Color[] colors = new Color[100 * 100];
+            for (int i = 0; i < colors.Length; i++)
+            {
+                colors[i] = Color.magenta; // Placeholder color
+            }
+            texture.SetPixels(colors);
+            texture.Apply();
+            
+            sprite = Sprite.Create(
+                texture, 
+                new Rect(0, 0, texture.width, texture.height), 
+                new Vector2(0.5f, 0.5f)
+            );
+            
+            Debug.LogWarning($"Could not load SVG sprite: {name}, using placeholder");
+        }
+        
+        return sprite;
+    }
 } 

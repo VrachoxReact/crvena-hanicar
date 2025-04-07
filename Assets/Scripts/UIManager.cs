@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -6,8 +7,8 @@ using UnityEngine.SceneManagement;
 public class UIManager : MonoBehaviour
 {
     [Header("Game Panels")]
+    [SerializeField] public GameObject gameOverPanel;
     [SerializeField] private GameObject gamePanel;
-    [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject hintPanel;
     [SerializeField] private GameObject adPanel;
     [SerializeField] private GameObject shopPanel;
@@ -38,12 +39,12 @@ public class UIManager : MonoBehaviour
     {
         if (gameManager == null)
         {
-            gameManager = FindObjectOfType<GameManager>();
+            gameManager = FindFirstObjectByType<GameManager>();
         }
         
         if (hintManager == null)
         {
-            hintManager = FindObjectOfType<HintManager>();
+            hintManager = FindFirstObjectByType<HintManager>();
         }
     }
     

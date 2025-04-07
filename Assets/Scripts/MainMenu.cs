@@ -1,6 +1,8 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class MainMenu : MonoBehaviour
 {
@@ -24,10 +26,16 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private Text diamondText;
     
     private HintManager hintManager;
+    private AudioSource musicPlayer;
     
     private void Start()
     {
-        hintManager = FindObjectOfType<HintManager>();
+        hintManager = FindFirstObjectByType<HintManager>();
+        
+        if (musicPlayer == null)
+        {
+            musicPlayer = FindFirstObjectByType<AudioSource>();
+        }
         
         // Initialize UI elements
         playButton.onClick.AddListener(StartGame);

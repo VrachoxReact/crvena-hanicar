@@ -10,7 +10,10 @@ public class CardUI : MonoBehaviour, IPointerClickHandler
     private void Awake()
     {
         card = GetComponent<Card>();
-        gameManager = FindObjectOfType<GameManager>();
+        if (gameManager == null)
+        {
+            gameManager = FindFirstObjectByType<GameManager>();
+        }
     }
     
     public void OnPointerClick(PointerEventData eventData)

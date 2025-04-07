@@ -31,9 +31,9 @@ public class GameManager : MonoBehaviour
     [Header("Game Settings")]
     [SerializeField] private int cardsPerPlayer = 8;
     [SerializeField] private int gameEndScore = 51;
-    [SerializeField] private int diamondCost = 5;
+    [SerializeField] private int diamondCost = 5; // Used in hint cost calculation
     [SerializeField] private int startingDiamonds = 10;
-    [SerializeField] private bool enableTutorial = true;
+    [SerializeField] private bool enableTutorial = true; // Controls if tutorial starts automatically
     
     private List<Player> players = new List<Player>();
     private List<Card> currentTrick = new List<Card>();
@@ -51,16 +51,22 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         // Find required components if not set in inspector
-        if (uiManager == null) uiManager = FindObjectOfType<UIManager>();
-        if (hintManager == null) hintManager = FindObjectOfType<HintManager>();
-        if (visualEffects == null) visualEffects = FindObjectOfType<VisualEffects>();
-        if (tutorialManager == null) tutorialManager = FindObjectOfType<TutorialManager>();
-        if (omniscientBot == null) omniscientBot = FindObjectOfType<OmniscientBot>();
+        if (uiManager == null) uiManager = FindFirstObjectByType<UIManager>();
+        if (hintManager == null) hintManager = FindFirstObjectByType<HintManager>();
+        if (visualEffects == null) visualEffects = FindFirstObjectByType<VisualEffects>();
+        if (tutorialManager == null) tutorialManager = FindFirstObjectByType<TutorialManager>();
+        if (omniscientBot == null) omniscientBot = FindFirstObjectByType<OmniscientBot>();
     }
     
     private void Start()
     {
         InitializeGame();
+        
+        // Start tutorial if enabled in settings
+        if (enableTutorial && tutorialManager != null)
+        {
+            tutorialManager.StartTutorial();
+        }
     }
     
     private void InitializeGame()
@@ -166,7 +172,7 @@ public class GameManager : MonoBehaviour
             // Give feedback to player
             if (uiManager != null)
             {
-                uiManager.ShowMessage("This card cannot be played now.");
+                uiManager.ShowHintMessage("This card cannot be played now.");
             }
             
             // Shake the card to indicate it's not playable
@@ -374,7 +380,7 @@ public class GameManager : MonoBehaviour
         
         if (uiManager != null)
         {
-            uiManager.ShowMessage($"{players[actualWinnerIndex].Name} wins the trick!");
+            uiManager.ShowHintMessage($"{players[actualWinnerIndex].Name} wins the trick!");
         }
         
         return actualWinnerIndex;
@@ -450,53 +456,33 @@ public class GameManager : MonoBehaviour
     
     public void ShowHint()
     {
-        // Only show hints if it's the human player's turn
-        if (currentPlayerIndex != 0 || isGameOver) return;
-        
-        Card bestCard = GetBestCardHint();
-        
-        if (bestCard != null)
+        if (hintManager != null)
         {
-            // Highlight best card
-            HighlightCard(bestCard.suit, bestCard.rank);
-            
-            // Show hint message
-            if (uiManager != null)
+            // Check if they can afford the hint using diamond cost setting
+            if (hintManager.Diamonds >= diamondCost)
             {
-                uiManager.ShowHintMessage($"Best card to play: {bestCard.rank} of {bestCard.suit}");
+                string hintMessage = GetHintForCurrentState();
+                hintManager.ShowHint(hintMessage, diamondCost);
             }
-        }
-        else
-        {
-            if (uiManager != null)
+            else
             {
-                uiManager.ShowHintMessage("No valid card to play.");
+                if (uiManager != null)
+                {
+                    uiManager.ShowHintMessage("Not enough diamonds for a hint!");
+                }
             }
         }
     }
     
     public void WatchAd()
     {
-        if (uiManager != null)
-        {
-            uiManager.ShowMessage("Watching ad...");
-        }
+        Debug.Log("Ad watched - rewarding player");
         
-        // Simulate ad completion after a delay
-        StartCoroutine(SimulateAdCompletion(2.0f));
-    }
-    
-    private IEnumerator SimulateAdCompletion(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        
+        // Call public method to reward player for watching ad
         if (hintManager != null)
         {
-            hintManager.OnAdCompleted();
+            hintManager.RewardAdCompletion();
         }
-        
-        // Provide a free hint
-        ShowHint();
     }
     
     private Card GetBestCardHint()
@@ -538,9 +524,10 @@ public class GameManager : MonoBehaviour
         
         isGameOver = false;
         
-        if (uiManager != null)
+        // Hide game over panel if it's visible
+        if (uiManager != null && uiManager.gameOverPanel != null)
         {
-            uiManager.HideGameOver();
+            uiManager.gameOverPanel.SetActive(false);
         }
         
         StartNewRound();
@@ -579,5 +566,28 @@ public class GameManager : MonoBehaviour
     public void SetGamePaused(bool paused)
     {
         isGamePaused = paused;
+    }
+    
+    // Get a hint message based on the current game state
+    private string GetHintForCurrentState()
+    {
+        // Only show hints if it's the human player's turn
+        if (currentPlayerIndex != 0 || isGameOver) 
+            return "It's not your turn to play.";
+        
+        Card bestCard = GetBestCardHint();
+        
+        if (bestCard != null)
+        {
+            // Highlight best card
+            HighlightCard(bestCard.suit, bestCard.rank);
+            
+            // Return hint message
+            return $"Best card to play: {bestCard.rank} of {bestCard.suit}";
+        }
+        else
+        {
+            return "No valid card to play.";
+        }
     }
 } 

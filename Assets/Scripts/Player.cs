@@ -109,13 +109,8 @@ public class Player : MonoBehaviour
             playableCards = hand.Where(card => !card.isRed).ToList();
         }
         // Rule: Must follow suit if possible
-        else if (leadSuit != CardSuit.Hearts && leadSuit != CardSuit.Diamonds && 
-                 leadSuit != CardSuit.Clubs && leadSuit != CardSuit.Spades)
-        {
-            // First player in trick can play any card
-            playableCards = hand.ToList();
-        }
-        else
+        else if (leadSuit == CardSuit.Hearts || leadSuit == CardSuit.Diamonds || 
+                 leadSuit == CardSuit.Clubs || leadSuit == CardSuit.Spades)
         {
             // Must follow suit if possible
             List<Card> sameSuitCards = hand.Where(card => card.suit == leadSuit).ToList();
@@ -129,6 +124,11 @@ public class Player : MonoBehaviour
                 // Can play any card if no matching suit
                 playableCards = hand.ToList();
             }
+        }
+        else
+        {
+            // First player in trick or invalid lead suit can play any card
+            playableCards = hand.ToList();
         }
         
         return playableCards;
@@ -193,6 +193,7 @@ public class Player : MonoBehaviour
             {
                 // Special rule: three consecutive rounds with 0 points
                 totalScore -= 3;
+                Debug.Log($"{playerName} lost 3 points due to three consecutive zero rounds");
                 consecutiveZeroRounds = 0;
             }
         }
@@ -200,12 +201,22 @@ public class Player : MonoBehaviour
         {
             consecutiveZeroRounds = 0;
             totalScore += roundScore;
+            Debug.Log($"{playerName} gained {roundScore} points, total: {totalScore}");
         }
     }
     
     public void ClearHand()
     {
+        // Clear cards from hand while preserving round score for scoring
+        foreach (Card card in hand)
+        {
+            // Detach card from hand transform
+            if (card != null && card.gameObject != null)
+            {
+                // Only destroy if it's a game object in the scene
+                Destroy(card.gameObject);
+            }
+        }
         hand.Clear();
-        roundScore = 0;
     }
 } 

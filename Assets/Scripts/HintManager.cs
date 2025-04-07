@@ -1,6 +1,8 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using System.Collections.Generic;
 
 public class HintManager : MonoBehaviour
 {
@@ -14,10 +16,12 @@ public class HintManager : MonoBehaviour
     [SerializeField] private int hintCost = 5;
     [SerializeField] private int startingDiamonds = 10;
     [SerializeField] private int diamondsPerAd = 3;
-    [SerializeField] private int diamondPackPrice = 0.99f;
+    [SerializeField] private float diamondPackPrice = 0.99f;
     [SerializeField] private int diamondsInPack = 20;
+    [SerializeField] private int adRewardAmount = 3;
     
     private int diamonds;
+    private int consecutiveHints = 0;
     private GameManager gameManager;
     private UnityAction onHintRequested;
     
@@ -25,7 +29,10 @@ public class HintManager : MonoBehaviour
     
     private void Awake()
     {
-        gameManager = FindObjectOfType<GameManager>();
+        if (gameManager == null)
+        {
+            gameManager = FindFirstObjectByType<GameManager>();
+        }
         
         // Initialize UI elements
         hintButton.onClick.AddListener(RequestHint);
@@ -54,6 +61,18 @@ public class HintManager : MonoBehaviour
             // Not enough diamonds, offer options to get more
             adButton.gameObject.SetActive(true);
         }
+    }
+    
+    public void ShowHint(string hintMessage, int cost)
+    {
+        // Deduct diamonds
+        UseDiamonds(cost);
+        
+        // Increment consecutive hints counter
+        consecutiveHints++;
+        
+        // Show the hint message
+        ShowHintText(hintMessage);
     }
     
     public void ShowHintText(string hint)
@@ -141,6 +160,30 @@ public class HintManager : MonoBehaviour
         {
             diamonds = startingDiamonds;
             SaveDiamonds();
+        }
+    }
+    
+    public int GetHintCost(int consecutiveHints)
+    {
+        // Exponential cost: 1, 2, 4, 8, 16, etc.
+        return (int)Mathf.Pow(2, consecutiveHints);
+    }
+    
+    // Public method to reward watching ads
+    public void RewardAdCompletion()
+    {
+        // Add diamonds for watching an ad
+        diamonds += adRewardAmount;
+        SaveDiamonds();
+        UpdateDiamondUI();
+        
+        // Reset the consecutive hint counter to make hints cheaper
+        consecutiveHints = 0;
+        
+        if (gameManager != null)
+        {
+            // Show a hint since they watched an ad
+            gameManager.ShowHint();
         }
     }
 } 
